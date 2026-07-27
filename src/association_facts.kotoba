@@ -1,0 +1,77 @@
+(ns association-facts
+  (:export [main association-covered? entry-count entry-field topic-count
+            topic by-topic-count by-topic-id coverage-note]))
+
+(defn association-covered? [association :string] :i64
+  (string=? association "caam"))
+(defn entry-count [association :string] :i64
+  (if (association-covered? association) 2 0))
+(defn valid-entry? [association :string index :i64] :i64
+  (if (association-covered? association)
+    (if (= index 0) 1 (if (= index 1) 1 0)) 0))
+
+(defn entry-field [association :string index :i64 field :string]
+  [:option :string]
+  (if (valid-entry? association index)
+    (if (= index 0)
+      (cond
+        (string=? field "id") (option-some-of [:option :string] "caam.about-organization")
+        (string=? field "title") (option-some-of [:option :string] "中国汽车工业协会简介 (About CAAM, organization profile)")
+        (string=? field "association") (option-some-of [:option :string] "caam")
+        (string=? field "isic") (option-some-of [:option :string] "2910")
+        (string=? field "country") (option-some-of [:option :string] "CHN")
+        (string=? field "kind") (option-some-of [:option :string] "governance-program")
+        (string=? field "url") (option-some-of [:option :string] "http://www.caam.org.cn/chn/2/cate_7/con_5223237.html")
+        (string=? field "url-provenance") (option-some-of [:option :string] "official-association-site")
+        (string=? field "established-date") (option-some-of [:option :string] "1990-01-01")
+        (string=? field "last-revised-date") (option-some-of [:option :string] "2023-06-12")
+        (string=? field "retrieved-at") (option-some-of [:option :string] "2026-07-27")
+        :else (option-none-of [:option :string]))
+      (cond
+        (string=? field "id") (option-some-of [:option :string] "caam.industry-self-discipline-scope")
+        (string=? field "title") (option-some-of [:option :string] "行业自律 (industry self-discipline), one of CAAM's twelve stated 业务范围")
+        (string=? field "association") (option-some-of [:option :string] "caam")
+        (string=? field "isic") (option-some-of [:option :string] "2910")
+        (string=? field "country") (option-some-of [:option :string] "CHN")
+        (string=? field "kind") (option-some-of [:option :string] "self-regulatory-mandate")
+        (string=? field "url") (option-some-of [:option :string] "http://www.caam.org.cn/chn/2/cate_7/con_5223237.html")
+        (string=? field "url-provenance") (option-some-of [:option :string] "official-association-site")
+        (string=? field "last-revised-date") (option-some-of [:option :string] "2023-06-12")
+        (string=? field "retrieved-at") (option-some-of [:option :string] "2026-07-27")
+        :else (option-none-of [:option :string])))
+    (option-none-of [:option :string])))
+
+(defn topic-count [association :string index :i64] :i64
+  (if (valid-entry? association index) (if (= index 0) 2 1) 0))
+(defn topic [association :string index :i64 topic-index :i64]
+  [:option :string]
+  (if (valid-entry? association index)
+    (if (= index 0)
+      (if (= topic-index 0) (option-some-of [:option :string] "governance")
+          (if (= topic-index 1) (option-some-of [:option :string] "standards")
+              (option-none-of [:option :string])))
+      (if (= topic-index 0) (option-some-of [:option :string] "self-discipline")
+          (option-none-of [:option :string])))
+    (option-none-of [:option :string])))
+
+(defn by-topic-count [association :string candidate :string] :i64
+  (if (association-covered? association)
+    (if (string=? candidate "governance") 1
+        (if (string=? candidate "standards") 1
+            (if (string=? candidate "self-discipline") 1 0))) 0))
+(defn by-topic-id [association :string candidate :string index :i64]
+  [:option :string]
+  (if (association-covered? association)
+    (if (= index 0)
+      (if (string=? candidate "governance") (entry-field association 0 "id")
+          (if (string=? candidate "standards") (entry-field association 0 "id")
+              (if (string=? candidate "self-discipline") (entry-field association 1 "id")
+                  (option-none-of [:option :string]))))
+      (option-none-of [:option :string]))
+    (option-none-of [:option :string])))
+(defn coverage-note [association :string] [:option :string]
+  (if (association-covered? association)
+    (option-some-of [:option :string]
+      "cloud-itonami-assoc-2910-chn-caam Wave 0 (ADR-2607141700): 2 caam entries seeded from the association's own 协会简介 page, read 2026-07-27. Only that page was reachable from the authoring network; no separate self-regulatory-code document URL is claimed. Extend the sovereign catalog; never fabricate a rule id/url.")
+    (option-none-of [:option :string])))
+(defn main [] :i64 0)
